@@ -65,3 +65,19 @@ h1 {
   margin: 0;
 }
 
+.completed {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.highlight {
+  font-weight: bold;
+}
+
+.close-btn {
+  color: rgb(154, 152, 152);
+  border: none;
+  border-radius: 10px;
+  background-color: transparent;
+
+}
