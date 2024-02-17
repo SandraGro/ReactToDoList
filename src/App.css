@@ -72,6 +72,7 @@ h1 {
 
 .highlight {
   font-weight: bold;
+  background-color: rgb(2, 2, 2);
 }
 
 .close-btn {

@@ -8,65 +8,79 @@ const App = () => {
   const [searchResults, setSearchResults] = useState([]);
 
   const [data, setData] = useState([]);
-  useEffect(() => {
-    console.log(notes, "notes");
+  // useEffect(() => {
+  //   console.log(notes, "notes");
 
-    fetch("http://localhost:3000/notes")
+  //   fetch("http://localhost:3000/notes")
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       setData(data);
+  //     });
+  // }, []);
+  const [notes, setNotes] = useState([]);
+  console.log(notes, 'notas');
+
+  // const [notes, setNotes] = useState([
+  //   {
+  //     id: 1,
+  //     title: "Note 1",
+  //     completed: false,
+  //     items: [
+  //       {
+  //         id: 1,
+  //         value: "First item",
+  //         order: 1,
+  //         noteId: 1,
+  //         completed: false,
+  //         deleted: false,
+  //       },
+  //       {
+  //         id: 2,
+  //         value: "Second item",
+  //         order: 2,
+  //         noteId: 1,
+  //         completed: false,
+  //         deleted: false,
+  //       },
+  //     ],
+  //     draftItem: "",
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Note 2",
+  //     completed: true,
+  //     items: [
+  //       {
+  //         id: 3,
+  //         value: "Third item",
+  //         order: 1,
+  //         noteId: 2,
+  //         completed: false,
+  //         deleted: false,
+  //       },
+  //       {
+  //         id: 4,
+  //         value: "Last item",
+  //         order: 2,
+  //         noteId: 2,
+  //         completed: false,
+  //         deleted: false,
+  //       },
+  //     ],
+  //     draftItem: "",
+  //   },
+  // ]);
+
+  useEffect(() => {
+    fetch("http://localhost:3001/api/notes")
       .then((response) => response.json())
-      .then((data) => {
-        setData(data);
+      .then((notas) => {
+        setNotes(notas);
+      })
+      .catch((error) => {
+        console.error(error);
       });
   }, []);
-  const [notes, setNotes] = useState([
-    {
-      id: 1,
-      title: "Note 1",
-      completed: false,
-      items: [
-        {
-          id: 1,
-          value: "First item",
-          order: 1,
-          noteId: 1,
-          completed: false,
-          deleted: false,
-        },
-        {
-          id: 2,
-          value: "Second item",
-          order: 2,
-          noteId: 1,
-          completed: false,
-          deleted: false,
-        },
-      ],
-      draftItem: "",
-    },
-    {
-      id: 2,
-      title: "Note 2",
-      completed: true,
-      items: [
-        {
-          id: 3,
-          value: "Third item",
-          order: 1,
-          noteId: 2,
-          completed: false,
-          deleted: false,
-        },
-        {
-          id: 4,
-          value: "Last item",
-          order: 2,
-          noteId: 2,
-          completed: false,
-          deleted: false,
-        },
-      ],
-      draftItem: "",
-    },
-  ]);
 
   useEffect(() => {
     const filteredNotes = notes.filter(
