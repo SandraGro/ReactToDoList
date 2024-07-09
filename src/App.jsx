@@ -1,81 +1,22 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faEdit, faTimes } from "@fortawesome/free-solid-svg-icons";
 import "./App.css";
 
 const App = () => {
+  const [editingNote, setEditingNote] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [originalNotes, setOriginalNotes] = useState([]);
 
-  const [data, setData] = useState([]);
-  // useEffect(() => {
-  //   console.log(notes, "notes");
-
-  //   fetch("http://localhost:3000/notes")
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       setData(data);
-  //     });
-  // }, []);
   const [notes, setNotes] = useState([]);
-  console.log(notes, 'notas');
-
-  // const [notes, setNotes] = useState([
-  //   {
-  //     id: 1,
-  //     title: "Note 1",
-  //     completed: false,
-  //     items: [
-  //       {
-  //         id: 1,
-  //         value: "First item",
-  //         order: 1,
-  //         noteId: 1,
-  //         completed: false,
-  //         deleted: false,
-  //       },
-  //       {
-  //         id: 2,
-  //         value: "Second item",
-  //         order: 2,
-  //         noteId: 1,
-  //         completed: false,
-  //         deleted: false,
-  //       },
-  //     ],
-  //     draftItem: "",
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Note 2",
-  //     completed: true,
-  //     items: [
-  //       {
-  //         id: 3,
-  //         value: "Third item",
-  //         order: 1,
-  //         noteId: 2,
-  //         completed: false,
-  //         deleted: false,
-  //       },
-  //       {
-  //         id: 4,
-  //         value: "Last item",
-  //         order: 2,
-  //         noteId: 2,
-  //         completed: false,
-  //         deleted: false,
-  //       },
-  //     ],
-  //     draftItem: "",
-  //   },
-  // ]);
 
   useEffect(() => {
     fetch("http://localhost:3001/api/notes")
       .then((response) => response.json())
       .then((notas) => {
         setNotes(notas);
+        setOriginalNotes(notas.map((note) => ({ ...note })));
       })
       .catch((error) => {
         console.error(error);
@@ -93,98 +34,98 @@ const App = () => {
     setSearchResults(filteredNotes);
   }, [searchTerm, notes]);
 
-  const addNewItem = (noteId) => {
-    const newState = notes.map((note, index) => {
-      if (noteId === index) {
-        return {
-          ...note,
-          items: [
-            ...note.items,
-            {
-              id: note.items.length + 1,
-              value: note.draftItem,
-              order: note.items.length + 1,
-              noteId: note.id,
-              completed: false,
-            },
-          ],
-          draftItem: "",
-        };
-      } else {
-        return { ...note };
-      }
-    });
-    setNotes(newState);
-  };
-  const handleInputChange = (e, indexToEdit) => {
-    const newState = notes.map((note, index) => {
-      if (indexToEdit === index) {
-        return {
-          ...note,
-          draftItem: e.target.value,
-        };
-      } else {
-        return { ...note };
-      }
-    });
-    setNotes(newState);
+  const editNote = (noteIndex) => {
+    setEditingNote(noteIndex);
   };
 
-  const handleKeyPress = (e, index) => {
-    if (e.key === "Enter") {
-      addNewItem(index);
+  const saveNote = async (noteIndex) => {
+    try {
+      const updatedNote = notes[noteIndex];
+      console.log("Updating note:", noteIndex);
+
+      const response = await fetch(
+        `http://localhost:3001/api/notes/${updatedNote.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedNote),
+        }
+      );
+
+      if (response.ok) {
+        const updatedNotes = [...notes];
+        updatedNotes[noteIndex] = { ...updatedNote };
+        setNotes(updatedNotes);
+        setEditingNote(null);
+      } else {
+        console.error("Error updating note:", response.status);
+      }
+    } catch (error) {
+      console.error("Error updating note:", error.message);
     }
   };
 
-  const itemCompleted = (noteIndex, itemIndex) => {
-    const newState = notes.map((note, index) => {
-      if (index === noteIndex) {
-        const updatedItems = note.items.map((item, i) => {
-          if (i === itemIndex) {
-            return {
-              ...item,
-              completed: !item.completed,
-            };
-          } else {
-            return item;
-          }
-        });
-        return {
-          ...note,
-          items: updatedItems,
-        };
-      } else {
-        return note;
-      }
+
+  const cancelEditNote = (noteIndex) => {
+    const updatedNotes = [...notes];
+    updatedNotes[noteIndex] = { ...originalNotes[noteIndex] };
+    setNotes(updatedNotes);
+    setEditingNote(null);
+  };
+
+  const handleEditNoteTitleChange = (e, noteIndex) => {
+    const updatedNotes = [...notes];
+    updatedNotes[noteIndex] = {
+      ...updatedNotes[noteIndex],
+      title: e.target.value,
+    };
+    setNotes(updatedNotes);
+  };
+
+  const handleInputChange = (e, noteIndex) => {
+    const updatedNotes = [...notes];
+    updatedNotes[noteIndex] = {
+      ...updatedNotes[noteIndex],
+      draftItem: e.target.value,
+    };
+    setNotes(updatedNotes);
+  };
+
+  const handleKeyPress = (e, noteIndex) => {
+    if (e.key === "Enter") {
+      addNewItem(noteIndex);
+    }
+  };
+
+  const addNewItem = (noteIndex) => {
+    const updatedNotes = [...notes];
+    const noteToUpdate = { ...updatedNotes[noteIndex] };
+    noteToUpdate.items.push({
+      id: noteToUpdate.items.length + 1,
+      value: noteToUpdate.draftItem,
+      order: noteToUpdate.items.length + 1,
+      noteId: noteToUpdate.id,
+      completed: false,
     });
-    setNotes(newState);
+    noteToUpdate.draftItem = "";
+    updatedNotes[noteIndex] = noteToUpdate;
+    setNotes(updatedNotes);
+  };
+
+  const itemCompleted = (noteIndex, itemIndex) => {
+    const updatedNotes = [...notes];
+    updatedNotes[noteIndex].items[itemIndex].completed = !updatedNotes[noteIndex].items[itemIndex].completed;
+    setNotes(updatedNotes);
   };
 
   const deleteItem = (noteIndex, itemIndex) => {
-    const newState = notes.map((note, index) => {
-      if (index === noteIndex) {
-        const updatedItems = note.items
-          .map((item, i) => {
-            if (i === itemIndex) {
-              return {
-                ...item,
-                deleted: true,
-              };
-            } else {
-              return item;
-            }
-          })
-          .filter((item) => !item.deleted);
-        return {
-          ...note,
-          items: updatedItems,
-        };
-      } else {
-        return note;
-      }
-    });
-    setNotes(newState);
+    const updatedNotes = [...notes];
+    updatedNotes[noteIndex].items.splice(itemIndex, 1);
+    setNotes(updatedNotes);
   };
+
   const highlightSearchTerm = (text) => {
     if (!searchTerm.trim()) {
       return text;
@@ -206,59 +147,81 @@ const App = () => {
   };
 
   return (
-    <>
+    <div>
+      <h1>ToDo App</h1>
       <div>
-        <h1>ToDo App</h1>
-        <div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search notes"
-          />
-        </div>
-        <div>
-          <ul>
-            {searchResults.map((note, index) => (
-              <li key={`Note-${note.id}`} className="note">
-                <p className="noteTitle">{highlightSearchTerm(note.title)}</p>
-                <hr />
-                <ul key={`Items-${note.id}`}>
-                  {note.items.map((item, itemIndex) => (
-                    <li
-                      key={`Items-${item.id}`}
-                      className={`item ${item.completed ? "completed" : ""}`}
-                    >
-                      <label>
-                        <input
-                          type="checkbox"
-                          onChange={() => itemCompleted(index, itemIndex)}
-                          checked={item.completed}
-                        />
-                        {highlightSearchTerm(item.value)}
-                      </label>
-                      <button
-                        className="close-btn"
-                        onClick={() => deleteItem(index, itemIndex)}
-                      >
-                        <FontAwesomeIcon icon={faTimes} />
-                      </button>
-                    </li>
-                  ))}
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search notes"
+        />
+      </div>
+      <div>
+        <ul>
+          {searchResults.map((note, index) => (
+            <li key={`Note-${note.id}`} className="note">
+              <p className="noteTitle">
+                {editingNote === index ? (
                   <input
                     type="text"
-                    value={note.draftItem}
-                    onChange={(e) => handleInputChange(e, index)}
-                    onKeyPress={(e) => handleKeyPress(e, index)}
-                    placeholder="Add new item"
+                    value={note.title}
+                    onChange={(e) => handleEditNoteTitleChange(e, index)}
                   />
-                </ul>
-              </li>
-            ))}
-          </ul>
-        </div>
+                ) : (
+                  highlightSearchTerm(note.title)
+                )}
+                {editingNote === index ? (
+                  <>
+                    <button onClick={() => saveNote(index)}>
+                      <FontAwesomeIcon icon={faCheck} />
+                    </button>
+                    <button onClick={() => cancelEditNote(index)}>
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => editNote(index)}>
+                    <FontAwesomeIcon icon={faEdit} />
+                  </button>
+                )}
+              </p>
+              <hr />
+              <ul key={`Items-${note.id}`}>
+                {note.items.map((item, itemIndex) => (
+                  <li
+                    key={`Items-${item.id}`}
+                    className={`item ${item.completed ? "completed" : ""}`}
+                  >
+                    <label>
+                      <input
+                        type="checkbox"
+                        onChange={() => itemCompleted(index, itemIndex)}
+                        checked={item.completed}
+                      />
+                      {highlightSearchTerm(item.value)}
+                    </label>
+                    <button
+                      className="close-btn"
+                      onClick={() => deleteItem(index, itemIndex)}
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  </li>
+                ))}
+                <input
+                  type="text"
+                  value={note.draftItem}
+                  onChange={(e) => handleInputChange(e, index)}
+                  onKeyPress={(e) => handleKeyPress(e, index)}
+                  placeholder="Add new item"
+                />
+              </ul>
+            </li>
+          ))}
+        </ul>
       </div>
-    </>
+    </div>
   );
 };
 
